@@ -8,7 +8,7 @@ import glob
 import math
 from  ConfigParser import *
 import modules.Calc 
-from modules.Calc import v,ctau, DeltaR, DeltaPhi, DeltaEta
+from modules.Calc import DeltaR, DeltaPhi, DeltaEta
 
 def GetChain(files_path,treename,signal):
     chain = TChain(treename)
@@ -79,7 +79,7 @@ tagname        = args.tag
 maxnevents     = args.maxnevents
 
 #Reading configuration
-print "[INFO] Reading skim configuration file . . ."
+print "[INFO] Reading configuration file . . ."
 cfgparser = ConfigParser()
 cfgparser.read('%s'%configfilename)
 print "[INFO] Getting configuration parameters . . ."
