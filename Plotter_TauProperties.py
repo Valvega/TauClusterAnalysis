@@ -1,5 +1,5 @@
 import ROOT
-from ROOT import TFile, TTree, TMath, TChain, TH2F, TH1F
+from ROOT import TFile, TTree, TMath, TChain, TH2F, TH1F, TCanvas,TPaveText,TLegend
 import sys
 import os
 import argparse
@@ -57,7 +57,7 @@ def Plot1DMultipleFiles(inputdirectory,outputdirectory,infiles,histo):
         #Draw all histograms 
         for k in range(0,len(allhistos)):  allhistos[k].DrawNormalized("Histo SAME")
         #Draw a legend
-        leg_1 = ROOT.TLegend(0.15,0.75,0.85,0.90)
+        leg_1 = TLegend(0.15,0.75,0.85,0.90)
         leg_1.SetNColumns(1)
         leg_1.SetBorderSize(0)
         leg_1.SetTextSize(0.040)
@@ -69,7 +69,7 @@ def Plot1DMultipleFiles(inputdirectory,outputdirectory,infiles,histo):
         leg_1.Draw()
         for k in range(0,len(allhistos)): leg_1.AddEntry(allhistos[k],infiles[k][3], "l")
         #Add CMS labels
-        pt1 = ROOT.TPaveText(0.1463218,0.886316,0.3045977,0.978947,"brNDC")
+        pt1 = TPaveText(0.1463218,0.886316,0.3045977,0.978947,"brNDC")
         pt1.SetBorderSize(0)
         pt1.SetTextAlign(12)
         pt1.SetTextFont(62)
