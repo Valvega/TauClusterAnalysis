@@ -14,7 +14,7 @@ cd nobackup
 mkdir VLLAnalysis
 cd VLLAnalysis
 cmsrel CMSSW_10_6_8
-cd CMSSW_10_6_8
+cd CMSSW_10_6_8/src/
 cmsenv
 git clone https://github.com/FNALLPC-VLL/TauClusterAnalysis.git
 cd TauClusterAnalysis 
