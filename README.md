@@ -1,5 +1,5 @@
-# VLL Run-2 Analysis using taus and muon clusters
-Code to analyze 
+# VLL Run-2 Analysis 
+Code to analyze MC and data to search for vector-like lepton pairs, each decaying into a tau lepton and a long-lived pseudoscalar
 
 ## Install
 
@@ -16,6 +16,6 @@ cd VLLAnalysis
 cmsrel CMSSW_10_6_8
 cd CMSSW_10_6_8
 cmsenv
-git clone https://github.com/FNALLPC-LLP/TauClusterAnalysis.git
+git clone https://github.com/FNALLPC-VLL/TauClusterAnalysis.git
 cd TauClusterAnalysis 
 ````
