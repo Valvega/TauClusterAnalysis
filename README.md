@@ -37,11 +37,10 @@ where
 
 A script template of how to read the histograms and plot them in pyROOT is Plotter_TauProperties.py. The command to run it is the following: 
 ````
-python Plotter_TauProperties.py --config config/configuration_2018.cfg --tag taustudies --maxnevents 10000
+python Plotter_TauProperties.py --config config/configuration_2018.cfg --tag taustudies
 ````
 where 
 ````
 --config     configuration file with the information about the inputs and output directories
 --tag        the name of the input/output folder (defined by user)
---maxnevents the maximum number of events to be processed (all by default)
 ````

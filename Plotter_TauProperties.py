@@ -91,11 +91,9 @@ def Plot1DMultipleFiles(inputdirectory,outputdirectory,infiles,histo):
 parser = argparse.ArgumentParser(description='Command line parser of skim options')
 parser.add_argument('--config' ,       dest='cfgfile'   ,  help='Name of config file'   , required = True)
 parser.add_argument('--tag',           dest='tag'       ,  help='Name of output folder' , required = True)
-parser.add_argument('--maxnevents',    dest='maxnevents',  help='Number of maxevents'   , type=int, default  = -1 )
 args           = parser.parse_args()
 configfilename = args.cfgfile
 tagname        = args.tag
-maxnevents     = args.maxnevents
 #Reading configuration
 print "[INFO] Reading configuration file . . ."
 cfgparser = ConfigParser()
