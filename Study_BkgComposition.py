@@ -48,7 +48,12 @@ def Looper(input_dir,output_dir,signal,xs,lumi,maxevents):
 
         #Get entries from tree
         t.GetEntry(e)
-        if t.nTau>=1: continue
+        tauexist = False
+        for k in range(0, t.nTau):
+            if t.tauPt[i]> 50: 
+                tauexist = True 
+
+        if tauexist == False: continue
         counter+=1
 
     print "Number of events with >=1 tau: ",counter
