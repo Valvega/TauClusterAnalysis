@@ -50,7 +50,7 @@ def Looper(input_dir,output_dir,signal,xs,lumi,maxevents):
         t.GetEntry(e)
         tauexist = False
         for k in range(0, t.nTau):
-            if t.tauPt[i]> 50: 
+            if t.tauPt[e]> 50: 
                 tauexist = True 
 
         if tauexist == False: continue
