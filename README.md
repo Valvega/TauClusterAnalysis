@@ -33,6 +33,18 @@ where
 --maxnevents the maximum number of events to be processed (all by default)
 ````
 
+## Make bkg studies
+A script template of how to read the ntuples and bkg studies is Study_BkgComposition.py. The command to run it is the following: 
+````
+python Study_BkgComposition.py --config config/configuration_2018.cfg --tag bkgtudies --maxnevents 10000
+````
+where 
+````
+--config     The configuration file with the information about the inputs/output/year directories,bkg samples, cross sections
+--tag        the name of the output folder (defined by user)
+--maxnevents the maximum number of events to be processed (all by default)
+````
+
 ## Plot histograms
 
 A script template of how to read the histograms and plot them in pyROOT is Plotter_TauProperties.py. The command to run it is the following: 
