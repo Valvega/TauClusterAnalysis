@@ -56,3 +56,14 @@ where
 --config     configuration file with the information about the inputs and output directories
 --tag        the name of the input/output folder (defined by user)
 ````
+
+## Make CSC selection studies
+A script template of how to read the ntuples and do CSC+Tau selection studies is Study_CSCTauRegion.py. The command to run it is the following:
+````
+python Study_CSCTauRegion.py  --config config/configuration_2018_table.cfg --tag metoptimizationbkgstudiesfull
+````
+where
+````
+--config     The configuration file with the information about the inputs/output/year directories, cross sections
+--tag        the name of the input ntuples version folder (defined by user)
+````
