@@ -20,27 +20,28 @@ ROOT.gROOT.SetBatch(True)
 def MakeCSCEfficiencyTable(info,signal,isData):
         os.system("mkdir studies")
         os.system("mkdir studies/taucsccutflow")
-        x = PrettyTable( ['Selections','Cut. Eff.(%)','Cul. Eff.(%)','Exp. Events'])
+        x = PrettyTable( ['Selections','Cut. Eff.(%)','Cul. Eff.(%)','Exp. Events +/- Uncertainty'])
         x.align["Selections"]    = "l"
         x.align["Cut. Eff.(%)"]  = "r"
         x.align["Cul. Eff.(%)"]  = "r"
-        x.align["Exp. Events"]   = "r"
+        x.align["Exp. Events +/- Uncertainty"]   = "r"
+        
         entries = len(info)
         if isData:
                 for k in range(2,entries):
-                    x.add_row(['%s'%info[k][0],'%.2f'%(100*info[k][1]/info[k-1][1]),'%.5f'%(100*info[k][1]/info[k][2][0]),'%.1f'%info[k][1]])                                  
+                    x.add_row(['%s'%info[k][0],'%.2f'%(100*info[k][1]/info[k-1][1]),'%.5f'%(100*info[k][1]/info[k][2][0]),'%.3f +/- %.4f'%(info[k][1], info[k][3])])                                  
         else:
                 for k in range(0,entries):
                       if k==0:
-                        x.add_row(['%s'%info[k][0],'%.2f'%(100*info[k][1]/info[k][2][0]),'%.5f'%(100*info[k][1]/info[k][2][0]),'%.1f'%info[k][1]])                       
+                        x.add_row(['%s'%info[k][0],'%.2f'%(100*info[k][1]/info[k][2][0]),'%.5f'%(100*info[k][1]/info[k][2][0]),'%.3f +/- %.4f'%(info[k][1], info[k][3])])                       
                       elif k==1: 
-                        x.add_row(['%s'%info[k][0],'%.2f'%(100*info[k][1]/info[k-1][1]),'%.5f'%(100*info[k][1]/info[k][2][0]),'%.1f'%info[k][1]])
+                        x.add_row(['%s'%info[k][0],'%.2f'%(100*info[k][1]/info[k-1][1]),'%.5f'%(100*info[k][1]/info[k][2][0]), '%.3f +/- %.4f'%(info[k][1], info[k][3])])
                         x.add_row(['--------------------','--------------','--------------','-------------'])
                       else: 
                         if info[k-1][1]==0 or info[k][2][1]==0: 
-                            x.add_row(['%s'%info[k][0],'0.00','0.00000','0.0'])
+                            x.add_row(['%s'%info[k][0],'0.00','0.00000','0.000'])
                         else:
-                            x.add_row(['%s'%info[k][0],'%.2f'%(100*info[k][1]/info[k-1][1]),'%.5f'%(100*info[k][1]/info[k][2][1]),'%.1f'%info[k][1]])
+                            x.add_row(['%s'%info[k][0],'%.2f'%(100*info[k][1]/info[k-1][1]),'%.5f'%(100*info[k][1]/info[k][2][1]), '%.3f +/- %.4f'%(info[k][1], info[k][3])])
         print x
         with open('studies/taucsccutflow/%s.txt'%(signal), 'w') as the_file:
            the_file.write(str(x))
@@ -86,8 +87,8 @@ def CSCLooper(input_dir,output_dir,sample,samplename,isData,isSignal,signorm):
         plot = False
         if (isData==False) or (isData==True and t.cscRechitClusterSize[clsid]<80): plot=True
 
-        #CUT (Select Tau)
-        tautagged,tauid = SelectTau(t)
+        #CUT (Select Tau) #(and Select AntiTau)
+        tautagged,tauid = SelectAntiTau(t)
         if tautagged==False: continue
         cut7+=1 
         if plot==True:
@@ -166,20 +167,20 @@ def CSCLooper(input_dir,output_dir,sample,samplename,isData,isSignal,signorm):
     else: 
         nums.append(w*float(cut14) ) 
     effinfo = [
-             [tag                        ,nums[0] , den],
-             ['MET Trigger and MET>200'  ,nums[1] , den],
-             ['MET filters'              ,nums[2] , den], 
-             ['CSC+DT rings <= 10'       ,nums[3] , den],
-             ['# clusters >= 1'          ,nums[4] , den],
-             ['# CSC clusters >= 1'      ,nums[5] , den],
-             ['# tauhads >= 1'           ,nums[6] , den], 
-             ['Jet Veto'                 ,nums[7] , den], 
-             ['Muon Veto'                ,nums[8] , den],
-             ['ME1/1, MB1, RB1 Vetos'    ,nums[9] , den],  
-             ['|Eta| < 2.2'              ,nums[10], den], 
-             ['Time spread < 20 ns'      ,nums[11], den],
-             ['-5 ns < Time < 12.5 ns'   ,nums[12], den],
-             ['|dPhi(cls,MET)| < pi/2'   ,nums[13], den],
+             [tag                        ,nums[0] , den, math.sqrt(w*nums[0])],
+             ['MET Trigger and MET>200'  ,nums[1] , den, math.sqrt(w*nums[1])],
+             ['MET filters'              ,nums[2] , den, math.sqrt(w*nums[2])], 
+             ['CSC+DT rings <= 10'       ,nums[3] , den, math.sqrt(w*nums[3])],
+             ['# clusters >= 1'          ,nums[4] , den, math.sqrt(w*nums[4])],
+             ['# CSC clusters >= 1'      ,nums[5] , den, math.sqrt(w*nums[5])],
+             ['# tauhads >= 1'           ,nums[6] , den, math.sqrt(w*nums[6])], 
+             ['Jet Veto'                 ,nums[7] , den, math.sqrt(w*nums[7])], 
+             ['Muon Veto'                ,nums[8] , den, math.sqrt(w*nums[8])],
+             ['ME1/1, MB1, RB1 Vetos'    ,nums[9] , den, math.sqrt(w*nums[9])],  
+             ['|Eta| < 2.2'              ,nums[10], den, math.sqrt(w*nums[10])], 
+             ['Time spread < 20 ns'      ,nums[11], den, math.sqrt(w*nums[11])],
+             ['-5 ns < Time < 12.5 ns'   ,nums[12], den, math.sqrt(w*nums[12])],
+#             ['|dPhi(cls,MET)| < pi/2'   ,nums[13], den, math.sqrt(w*nums[13])],
     ]
 
     return effinfo

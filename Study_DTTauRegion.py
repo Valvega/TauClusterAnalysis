@@ -20,27 +20,28 @@ ROOT.gROOT.SetBatch(True)
 def MakeDTEfficiencyTable(info,signal,isData):
         os.system("mkdir studies")
         os.system("mkdir studies/taudtcutflow")
-        x = PrettyTable( ['Selections','Cut. Eff.(%)','Cul. Eff.(%)','Exp. Events'])
+        x = PrettyTable( ['Selections','Cut. Eff.(%)','Cul. Eff.(%)','Exp. Events +/- Uncertainty'])
         x.align["Selections"]    = "l"
         x.align["Cut. Eff.(%)"]  = "r"
         x.align["Cul. Eff.(%)"]  = "r"
-        x.align["Exp. Events"]   = "r"
+        x.align["Exp. Events +/- Uncertainty"]   = "r"
+        
         entries = len(info)
         if isData:
                 for k in range(2,entries):
-                    x.add_row(['%s'%info[k][0],'%.2f'%(100*info[k][1]/info[k-1][1]),'%.5f'%(100*info[k][1]/info[k][2][0]),'%.1f'%info[k][1]])                                  
+                    x.add_row(['%s'%info[k][0],'%.2f'%(100*info[k][1]/info[k-1][1]),'%.5f'%(100*info[k][1]/info[k][2][0]),'%.3f +/- %.4f'%(info[k][1], info[k][3])])                                  
         else:
                 for k in range(0,entries):
                       if k==0:
-                        x.add_row(['%s'%info[k][0],'%.2f'%(100*info[k][1]/info[k][2][0]),'%.5f'%(100*info[k][1]/info[k][2][0]),'%.1f'%info[k][1]])                       
+                        x.add_row(['%s'%info[k][0],'%.2f'%(100*info[k][1]/info[k][2][0]),'%.5f'%(100*info[k][1]/info[k][2][0]),'%.3f +/- %.4f'%(info[k][1], info[k][3])])                       
                       elif k==1: 
-                        x.add_row(['%s'%info[k][0],'%.2f'%(100*info[k][1]/info[k-1][1]),'%.5f'%(100*info[k][1]/info[k][2][0]),'%.1f'%info[k][1]])
+                        x.add_row(['%s'%info[k][0],'%.2f'%(100*info[k][1]/info[k-1][1]),'%.5f'%(100*info[k][1]/info[k][2][0]),'%.3f +/- %.4f'%(info[k][1], info[k][3])])
                         x.add_row(['--------------------','--------------','--------------','-------------'])
                       else: 
                         if info[k-1][1]==0 or info[k][2][1]==0: 
-                            x.add_row(['%s'%info[k][0],'0.00','0.00000','0.0'])
+                            x.add_row(['%s'%info[k][0],'0.00','0.00000','0.000'])
                         else:
-                            x.add_row(['%s'%info[k][0],'%.2f'%(100*info[k][1]/info[k-1][1]),'%.5f'%(100*info[k][1]/info[k][2][1]),'%.1f'%info[k][1]])
+                            x.add_row(['%s'%info[k][0],'%.2f'%(100*info[k][1]/info[k-1][1]),'%.5f'%(100*info[k][1]/info[k][2][1]),'%.3f +/- %.4f'%(info[k][1], info[k][3])])
         print x
         with open('studies/taudtcutflow/%s.txt'%(signal), 'w') as the_file:
            the_file.write(str(x))
@@ -53,7 +54,7 @@ def DTLooper(input_dir,output_dir,sample,samplename,isData,isSignal,signorm):
     else:
         t, cf, ac_csc, ac_dt = GetChainMultiple(input_dir,'MuonSystem',sample,isData)
         tmp  = TFile.Open("%s/histos_tau_dtcutflow_%s.root"%(output_dir,samplename),'RECREATE')   
-
+    #Counters
     cut6    = 0
     cut7    = 0
     cut8    = 0
@@ -72,36 +73,44 @@ def DTLooper(input_dir,output_dir,sample,samplename,isData,isSignal,signorm):
     #Loop over events
     for e in range(0, t.GetEntries()):
         t.GetEntry(e)
+        
         #acceptance flag for mc
         if isData==False and isSignal==True and t.gLLP_dt[0]==0 and t.gLLP_dt[1]==0: continue
+        
         #CUT (Cluster)
         clstagged,clsid = SelectDtCluster(t)
         if clstagged==False: continue
         cut6+=1
         plot = False
         if (isData==False) or (isData==True and t.dtRechitClusterSize[clsid]<80): plot=True
-        #CUT (Tau)
-        tautagged,tauid = SelectTau(t)
+        
+        #CUT (Tau) #(and AntiTau) 
+        tautagged,tauid = SelectAntiTau(t)
         if tautagged==False: continue
         cut7+=1
+        
         #CUT (jet veto)
         if t.dtRechitClusterJetVetoPt[clsid]  > 20: continue
         cut8+=1
         if plot==True:
           h_cut8_clustertime.Fill(t.dtRechitCluster_match_RPCBx_dPhi0p5[clsid])
           h_cut8_cut_dphi_cls_met.Fill(abs(t.dtRechitClusterMet_dPhi[clsid]))
+        
         #CUT (muon veto)
         if t.dtRechitClusterMuonVetoPt[clsid] > 10: continue
         cut9+=1
         if plot==True:
           h_cut9_clustertime.Fill(t.dtRechitCluster_match_RPCBx_dPhi0p5[clsid])
           h_cut9_cut_dphi_cls_met.Fill(abs(t.dtRechitClusterMet_dPhi[clsid]))
+        
         #CUT (MB1 Adjacent)
         if t.dtRechitCluster_match_MB1hits_cosmics_minus[clsid] > 8 or t.dtRechitCluster_match_MB1hits_cosmics_plus[clsid] > 8: continue
         cut10+=1
+        
         #CUT (RPCmatching)
         if t.dtRechitCluster_match_RPChits_dPhi0p5[clsid] <=0: continue
         cut11+=1
+        
         #Cut (in time) 
         if INTimeDT(t,clsid)==True:
             cut12+=1
@@ -146,19 +155,19 @@ def DTLooper(input_dir,output_dir,sample,samplename,isData,isSignal,signorm):
         nums.append(float(cut13))  
 
     effinfo = [
-             [tag                        ,nums[0] , den],
-             ['MET Trigger and MET200'   ,nums[1] , den],
-             ['MET filters'              ,nums[2] , den], 
-             ['CSC+DT rings <= 10'       ,nums[3] , den],
-             ['# clusters >= 1'          ,nums[4] , den],
-             ['# DT clusters >= 1'       ,nums[5] , den],
-             ['# tauhads >= 1'           ,nums[6] , den], 
-             ['Jet Veto'                 ,nums[7] , den], 
-             ['Muon Veto'                ,nums[8] , den],
-             ['MB1 Adjacent'             ,nums[9] , den], 
-             ['RPC Matching'             ,nums[10], den], 
-             ['Time (BX=0)'              ,nums[11], den], 
-             #['|dPhi(cls,MET)| < pi/2'   ,nums[12], den],
+             [tag                        ,nums[0] , den, math.sqrt(w*nums[0])],
+             ['MET Trigger and MET200'   ,nums[1] , den, math.sqrt(w*nums[1])],
+             ['MET filters'              ,nums[2] , den, math.sqrt(w*nums[2])], 
+             ['CSC+DT rings <= 10'       ,nums[3] , den, math.sqrt(w*nums[3])],
+             ['# clusters >= 1'          ,nums[4] , den, math.sqrt(w*nums[4])],
+             ['# DT clusters >= 1'       ,nums[5] , den, math.sqrt(w*nums[5])],
+             ['# tauhads >= 1'           ,nums[6] , den, math.sqrt(w*nums[6])], 
+             ['Jet Veto'                 ,nums[7] , den, math.sqrt(w*nums[7])], 
+             ['Muon Veto'                ,nums[8] , den, math.sqrt(w*nums[8])],
+             ['MB1 Adjacent'             ,nums[9] , den, math.sqrt(w*nums[9])], 
+             ['RPC Matching'             ,nums[10], den, math.sqrt(w*nums[10])], 
+             ['Time (BX=0)'              ,nums[11], den, math.sqrt(w*nums[11])], 
+             #['|dPhi(cls,MET)| < pi/2'   ,nums[12], den, math.sqrt(w*nums[12])],
     ]
     tmp.Write()
     tmp.Close()
