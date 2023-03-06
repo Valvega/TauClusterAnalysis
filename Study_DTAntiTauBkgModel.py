@@ -20,9 +20,10 @@ ROOT.gStyle.SetOptStat(0)
 
 def PlotAntiTauModel(input_dir,output_dir,sel):
     #Opening files
-    tfile_data    = TFile.Open("%s/histos_dtmodel_%s_Data.root"%(input_dir,sel) )
-    h_tau_data        =  tfile_data.Get("h_tau_clustersize")
-    h_antitau_data    =  tfile_data.Get("h_antitau_clustersize")
+    tfile_data1        = TFile.Open("%s/histos_dtmodel_Data.root"%(input_dir) )
+    tfile_data2        = TFile.Open("%s/histos_dtmodel_%s_Data.root"%(input_dir,sel) )
+    h_tau_data        =  tfile_data1.Get("h_model_clustersize")
+    h_antitau_data    =  tfile_data2.Get("h_model_clustersize")
     #Set format
     h_tau_data.SetMarkerColor(ROOT.kBlack)
     h_tau_data.SetMarkerSize(2)
@@ -94,18 +95,19 @@ def PlotAntiTauModel(input_dir,output_dir,sel):
     c1.SaveAs("%s/dt_nrechits_%s.pdf"%(output_dir,sel))
     del c1
 
-def DTLooper(input_dir,output_dir,sample,samplename,isData,isSignal,norm,sel):
+def DTLooper(input_dir,output_dir,sample,samplename,isData,isSignal,norm,sel,tauregion):
     #Open input and output file
     if isData==False:
-        t, cf, ac_csc, ac_dt = GetChainSingle(input_dir,'MuonSystem',sample,isData)
-        tmp  = TFile.Open("%s/histos_dtmodel_%s_%s.root"%(output_dir,sel,samplename),'RECREATE')
+        t, cf, ac_csc, ac_dt = GetChainSingle(input_dir,'MuonSystem',sample,isData)          
     else:
         t, cf, ac_csc, ac_dt = GetChainMultiple(input_dir,'MuonSystem',sample,isData)
-        tmp  = TFile.Open("%s/histos_dtmodel_%s_%s.root"%(output_dir,sel,samplename),'RECREATE')        
+    if tauregion==True:
+            tmp  = TFile.Open("%s/histos_dtmodel_%s.root"%(output_dir,samplename),'RECREATE')
+    else:
+            tmp  = TFile.Open("%s/histos_dtmodel_%s_%s.root"%(output_dir,sel,samplename),'RECREATE')        
 
     #CUT (in-time)
-    h_tau_clustersize     = TH1F("h_tau_clustersize","h_tau_clustersize"        ,6,50,80)
-    h_antitau_clustersize = TH1F("h_antitau_clustersize","h_antitau_clustersize",6,50,80)
+    h_model_clustersize     = TH1F("h_model_clustersize","h_model_clustersize"        ,6,50,80)
 
     #Loop over events
     for e in range(0, t.GetEntries()):
@@ -121,47 +123,47 @@ def DTLooper(input_dir,output_dir,sample,samplename,isData,isSignal,norm,sel):
         if (isData==False) or (isData==True and t.dtRechitClusterSize[clsid]<80): plot=True
 
         #CUT (Select Tau or Antitau)
-        tautagged,tauid         = SelectTau(t)
-        antitautagged,antitauid = SelectAntiTau(t)
-
-        if tautagged==True:
-                #CUT (jet veto)
-                if t.dtRechitClusterJetVetoPt[clsid]  > 20: continue
-                #CUT (muon veto)
-                if t.dtRechitClusterMuonVetoPt[clsid] > 10: continue
-                #CUT (MB1 Adjacent)
-                if t.dtRechitCluster_match_MB1hits_cosmics_minus[clsid] > 8 or t.dtRechitCluster_match_MB1hits_cosmics_plus[clsid] > 8: continue
-                #CUT (RPCmatching)
-                if t.dtRechitCluster_match_RPChits_dPhi0p5[clsid] <=0: continue
-                #Cut (in time) 
-                if INTimeDT(t,clsid)==True:
-                    #CUT (dphi) 
-                    #if t.dtRechitClusterMet_dPhi[clsid]>=(math.pi/2):  continue
-                    #Tau RecHits distribution (blinded)
-                    if plot==True:
-                       h_tau_clustersize.Fill(t.dtRechitClusterSize[clsid])
-        if antitautagged==True:
-                #CUT (jet veto)
-                if t.dtRechitClusterJetVetoPt[clsid]  > 20: continue
-                #CUT (muon veto)
-                if t.dtRechitClusterMuonVetoPt[clsid] > 10: continue
-                #CUT (MB1 Adjacent)
-                if t.dtRechitCluster_match_MB1hits_cosmics_minus[clsid] > 8 or t.dtRechitCluster_match_MB1hits_cosmics_plus[clsid] > 8: continue
-                #CUT (RPCmatching)
-                if t.dtRechitCluster_match_RPChits_dPhi0p5[clsid] <=0: continue
-                #Cut (in time) 
-                if INTimeDT(t,clsid)==True:
-                    #CUT (dphi) 
-                    #if t.dtRechitClusterMet_dPhi[clsid]>=(math.pi/2): continue
-                    #Anti-tau RecHits distribution
-                    h_antitau_clustersize.Fill(t.dtRechitClusterSize[clsid])
+        if tauregion==True: 
+            tautagged,tauid         = SelectTau(t)
+            if tautagged==True:
+                    #CUT (jet veto)
+                    if t.dtRechitClusterJetVetoPt[clsid]  > 20: continue
+                    #CUT (muon veto)
+                    if t.dtRechitClusterMuonVetoPt[clsid] > 10: continue
+                    #CUT (MB1 Adjacent)
+                    if t.dtRechitCluster_match_MB1hits_cosmics_minus[clsid] > 8 or t.dtRechitCluster_match_MB1hits_cosmics_plus[clsid] > 8: continue
+                    #CUT (RPCmatching)
+                    if t.dtRechitCluster_match_RPChits_dPhi0p5[clsid] <=0: continue
+                    #Cut (in time) 
+                    if INTimeDT(t,clsid)==True:
+                        #CUT (dphi) 
+                        #if t.dtRechitClusterMet_dPhi[clsid]>=(math.pi/2):  continue
+                        #Tau RecHits distribution (blinded)
+                        if plot==True:
+                           h_model_clustersize.Fill(t.dtRechitClusterSize[clsid])
+        else:
+            antitautagged,antitauid = SelectAntiTau(t)
+            if antitautagged==True:
+                    #CUT (jet veto)
+                    if t.dtRechitClusterJetVetoPt[clsid]  > 20: continue
+                    #CUT (muon veto)
+                    if t.dtRechitClusterMuonVetoPt[clsid] > 10: continue
+                    #CUT (MB1 Adjacent)
+                    if t.dtRechitCluster_match_MB1hits_cosmics_minus[clsid] > 8 or t.dtRechitCluster_match_MB1hits_cosmics_plus[clsid] > 8: continue
+                    #CUT (RPCmatching)
+                    if t.dtRechitCluster_match_RPChits_dPhi0p5[clsid] <=0: continue
+                    #Cut (in time) 
+                    if INTimeDT(t,clsid)==True:
+                        #CUT (dphi) 
+                        #if t.dtRechitClusterMet_dPhi[clsid]>=(math.pi/2): continue
+                        #Anti-tau RecHits distribution
+                        h_model_clustersize.Fill(t.dtRechitClusterSize[clsid])
     #weights
     if isSignal==True:
       w = norm/cf.GetBinContent(1) 
     else:
       w = 1 
-    h_tau_clustersize.Scale(w)
-    h_antitau_clustersize.Scale(w)
+    h_model_clustersize.Scale(w)
     tmp.Write()
     tmp.Close()
 
@@ -169,11 +171,19 @@ def DTLooper(input_dir,output_dir,sample,samplename,isData,isSignal,norm,sel):
 parser = argparse.ArgumentParser(description='Command line parser of skim options')
 parser.add_argument('--config' ,  dest='cfgfile',  help='Name of config file',  required = True)
 parser.add_argument('--tag',    dest='tag',  help='Name of tag', required = True)
-parser.add_argument('--sel',    dest='sel',  help='Name of selection', required = True)
+parser.add_argument('--sel',    dest='sel',  help='Name of selection', required = False)
+parser.add_argument('--tauregion',    dest='tauregion', action='store_true', help='Apply Tau region')
+parser.add_argument('--no-tauregion', dest='tauregion', action='store_false',help='Do not apply Tau region')
+parser.add_argument('--draw',    dest='draw', action='store_true', help='Draw comparion')
+parser.set_defaults(tauregion=False)
+parser.set_defaults(draw=False)
+
 args           = parser.parse_args()
 configfilename = args.cfgfile
 tagname        = args.tag
 selname        = args.sel
+tauregion      = args.tauregion
+draw           = args.draw
 
 #Reading configuration
 print "[INFO] Reading skim configuration file . . ."
@@ -213,15 +223,16 @@ output_dir =  output_dir+tagname+"/%i"%year
 #isSignal=True
 #for k in range (0,len(signals) ):
 #    print "[INFO] Running looper over %s"%signals[k]
-#    DTLooper(input_dir+tagname,output_dir,signals[k],signals[k],isData,isSignal,sigxs[k]*lumi,selname)
+#    DTLooper(input_dir+tagname,output_dir,signals[k],signals[k],isData,isSignal,sigxs[k]*lumi,selname,tauregion)
 
 #Run looper over Data samples to make histograms
 isData=True
 isSignal=False
 print "[INFO] Running looper over data"
-DTLooper(input_dir+tagname,output_dir,datas,'Data',isData,isSignal,1,selname)
+DTLooper(input_dir+tagname,output_dir,datas,'Data',isData,isSignal,1,selname,tauregion)
 
-print "[INFO] Plotting models"
-os.system("mkdir plots")
-os.system("mkdir plots/bkgmodel")
-PlotAntiTauModel(output_dir,"plots/bkgmodel",selname)
+if draw==True:
+  print "[INFO] Plotting models"
+  os.system("mkdir plots")
+  os.system("mkdir plots/bkgmodel")
+  PlotAntiTauModel(output_dir,"plots/bkgmodel",selname)
