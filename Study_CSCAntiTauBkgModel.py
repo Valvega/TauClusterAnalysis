@@ -59,7 +59,7 @@ def PlotAntiTauModel(input_dir,output_dir,sel):
     maxvalue = max(maxs)
     histoframe.SetMaximum(10*maxvalue)
     h_antitau_data.DrawNormalized("E2 SAME")
-    h_antitau_data_line.DrawNormalized("SAME")
+    h_antitau_data_line.DrawNormalized("HIST SAME")
     h_tau_data.DrawNormalized("P SAME")
 
     #Draw a legend
