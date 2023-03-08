@@ -108,6 +108,8 @@ def DTLooper(input_dir,output_dir,sample,samplename,isData,isSignal,norm,sel,tau
 
     #CUT (in-time)
     h_model_clustersize     = TH1F("h_model_clustersize","h_model_clustersize"        ,6,50,80)
+    #CUT (out-of-time)
+    h_model_clustersize_oot = TH1F("h_model_clustersize_oot","h_model_clustersize_oot",30,50,200)
 
     #Loop over events
     for e in range(0, t.GetEntries()):
@@ -141,6 +143,11 @@ def DTLooper(input_dir,output_dir,sample,samplename,isData,isSignal,norm,sel,tau
                         #Tau RecHits distribution (blinded)
                         if plot==True:
                            h_model_clustersize.Fill(t.dtRechitClusterSize[clsid])
+                    if OOTimeDT(t,clsid)==True:
+                        #CUT (dphi) 
+                        #if t.dtRechitClusterMet_dPhi[clsid]>=(math.pi/2):  continue
+                        #Tau RecHits distribution (blinded)
+                        h_model_clustersize_oot.Fill(t.dtRechitClusterSize[clsid])
         else:
             antitautagged,antitauid = SelectAntiTau(t)
             if antitautagged==True:
@@ -158,6 +165,11 @@ def DTLooper(input_dir,output_dir,sample,samplename,isData,isSignal,norm,sel,tau
                         #if t.dtRechitClusterMet_dPhi[clsid]>=(math.pi/2): continue
                         #Anti-tau RecHits distribution
                         h_model_clustersize.Fill(t.dtRechitClusterSize[clsid])
+                    if OOTimeDT(t,clsid)==True:
+                        #CUT (dphi) 
+                        #if t.dtRechitClusterMet_dPhi[clsid]>=(math.pi/2): continue
+                        #Anti-tau RecHits distribution
+                        h_model_clustersize_oot.Fill(t.dtRechitClusterSize[clsid])
     #weights
     if isSignal==True:
       w = norm/cf.GetBinContent(1) 

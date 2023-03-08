@@ -107,7 +107,9 @@ def CSCLooper(input_dir,output_dir,sample,samplename,isData,isSignal,norm,sel,ta
 
     #CUT (in-time)
     h_model_clustersize     = TH1F("h_model_clustersize","h_model_clustersize"        ,6,50,80)
-
+    #CUT (out-of-time)
+    h_model_clustersize_oot = TH1F("h_model_clustersize_oot","h_model_clustersize_oot",30,50,200)
+    
     #Loop over events
     for e in range(0, t.GetEntries()):
         t.GetEntry(e)
@@ -144,27 +146,37 @@ def CSCLooper(input_dir,output_dir,sample,samplename,isData,isSignal,norm,sel,ta
                             #Tau RecHits distribution (blinded)
                             if plot==True:
                                h_model_clustersize.Fill(t.cscRechitClusterSize[clsid])
+                    if OOTimeCSC(t,clsid)==True:
+                            #CUT (dphi)
+                            #if abs(t.cscRechitClusterMet_dPhi[clsid])> (math.pi/2): continue
+                            #Tau RecHits distribution (blinded)
+                            h_model_clustersize_oot.Fill(t.cscRechitClusterSize[clsid])           
         else:
                 antitautagged,antitauid = SelectAntiTau(t)
                 if antitautagged==True:
-                       #CUT (Jet Veto)
-                       if t.cscRechitClusterJetVetoPt[clsid] > 10: continue
-                       #CUT (Muon Veto)
-                       if t.cscRechitClusterMuonVetoPt[clsid] > 20: continue
-                       #CUT (Chamber Veto)
-                       if t.cscRechitClusterNRechitChamberPlus11[clsid] > 0 or t.cscRechitClusterNRechitChamberMinus11[clsid] > 0: continue        
-                       if t.cscRechitCluster_match_MB1Seg_0p4[clsid] >0: continue 
-                       if t.cscRechitCluster_match_RB1_0p4[clsid] >0: continue 
-                       #Cut (Eta)
-                       if abs(t.cscRechitClusterEta[clsid]) > 2.2: continue
-                       #CUT(time spread)
-                       if t.cscRechitClusterTimeSpread[clsid] > 20: continue
-                       #CUT IN-Time 
-                       if INTimeCSC(t,clsid)==True:
+                        #CUT (Jet Veto)
+                        if t.cscRechitClusterJetVetoPt[clsid] > 10: continue
+                        #CUT (Muon Veto)
+                        if t.cscRechitClusterMuonVetoPt[clsid] > 20: continue
+                        #CUT (Chamber Veto)
+                        if t.cscRechitClusterNRechitChamberPlus11[clsid] > 0 or t.cscRechitClusterNRechitChamberMinus11[clsid] > 0: continue        
+                        if t.cscRechitCluster_match_MB1Seg_0p4[clsid] >0: continue 
+                        if t.cscRechitCluster_match_RB1_0p4[clsid] >0: continue 
+                        #Cut (Eta)
+                        if abs(t.cscRechitClusterEta[clsid]) > 2.2: continue
+                        #CUT(time spread)
+                        if t.cscRechitClusterTimeSpread[clsid] > 20: continue
+                        #CUT IN-Time 
+                        if INTimeCSC(t,clsid)==True:
+                                ##CUT (dphi)
+                                #if abs(t.cscRechitClusterMet_dPhi[clsid])> (math.pi/2): continue
+                                #Anti-tau RecHits distribution
+                                h_model_clustersize.Fill(t.cscRechitClusterSize[clsid])
+                        if OOTimeCSC(t,clsid)==True:
                                ##CUT (dphi)
                                #if abs(t.cscRechitClusterMet_dPhi[clsid])> (math.pi/2): continue
                                #Anti-tau RecHits distribution
-                               h_model_clustersize.Fill(t.cscRechitClusterSize[clsid])
+                               h_model_clustersize_oot.Fill(t.cscRechitClusterSize[clsid])       
     #weights
     if isSignal==True:
       w = norm/cf.GetBinContent(1) 
