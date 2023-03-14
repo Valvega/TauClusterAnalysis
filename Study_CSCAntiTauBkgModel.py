@@ -108,7 +108,7 @@ def CSCLooper(input_dir,output_dir,sample,samplename,isData,isSignal,norm,sel,ta
     #CUT (in-time)
     h_model_clustersize     = TH1F("h_model_clustersize","h_model_clustersize"        ,6,50,80)
     #CUT (out-of-time)
-    h_model_clustersize_oot = TH1F("h_model_clustersize_oot","h_model_clustersize_oot",30,50,200)
+    h_model_clustersize_oot = TH1F("h_model_clustersize_oot","h_model_clustersize_oot",10,50,150)
     
     #Loop over events
     for e in range(0, t.GetEntries()):
@@ -138,7 +138,7 @@ def CSCLooper(input_dir,output_dir,sample,samplename,isData,isSignal,norm,sel,ta
                     #Cut (Eta)
                     if abs(t.cscRechitClusterEta[clsid]) > 2.2: continue
                     #CUT(time spread)
-                    if t.cscRechitClusterTimeSpread[clsid] > 20: continue
+                    if t.cscRechitClusterTimeSpreadWeightedAll[clsid] > 20: continue
                     #CUT IN-Time 
                     if INTimeCSC(t,clsid)==True:
                             #CUT (dphi)
@@ -146,6 +146,7 @@ def CSCLooper(input_dir,output_dir,sample,samplename,isData,isSignal,norm,sel,ta
                             #Tau RecHits distribution (blinded)
                             if plot==True:
                                h_model_clustersize.Fill(t.cscRechitClusterSize[clsid])
+                    #CUT Out-Of-Time
                     if OOTimeCSC(t,clsid)==True:
                             #CUT (dphi)
                             #if abs(t.cscRechitClusterMet_dPhi[clsid])> (math.pi/2): continue
@@ -165,13 +166,14 @@ def CSCLooper(input_dir,output_dir,sample,samplename,isData,isSignal,norm,sel,ta
                         #Cut (Eta)
                         if abs(t.cscRechitClusterEta[clsid]) > 2.2: continue
                         #CUT(time spread)
-                        if t.cscRechitClusterTimeSpread[clsid] > 20: continue
+                        if t.cscRechitClusterTimeSpreadWeightedAll[clsid] > 20: continue
                         #CUT IN-Time 
                         if INTimeCSC(t,clsid)==True:
                                 ##CUT (dphi)
                                 #if abs(t.cscRechitClusterMet_dPhi[clsid])> (math.pi/2): continue
                                 #Anti-tau RecHits distribution
                                 h_model_clustersize.Fill(t.cscRechitClusterSize[clsid])
+                        #CUT Out-Of-Time 
                         if OOTimeCSC(t,clsid)==True:
                                ##CUT (dphi)
                                #if abs(t.cscRechitClusterMet_dPhi[clsid])> (math.pi/2): continue
