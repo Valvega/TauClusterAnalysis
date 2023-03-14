@@ -25,7 +25,6 @@ def MakeCSCEfficiencyTable(info,signal,isData):
         x.align["Cut. Eff.(%)"]  = "r"
         x.align["Cul. Eff.(%)"]  = "r"
         x.align["Exp. Events +/- Uncertainty"]   = "r"
-        
         entries = len(info)
         if isData:
                 for k in range(2,entries):
@@ -42,18 +41,30 @@ def MakeCSCEfficiencyTable(info,signal,isData):
                             x.add_row(['%s'%info[k][0],'0.00','0.00000','0.000'])
                         else:
                             x.add_row(['%s'%info[k][0],'%.2f'%(100*info[k][1]/info[k-1][1]),'%.5f'%(100*info[k][1]/info[k][2][1]), '%.3f +/- %.4f'%(info[k][1], info[k][3])])
+                      
         print x
         with open('studies/taucsccutflow/%s.txt'%(signal), 'w') as the_file:
            the_file.write(str(x))
 
-def CSCLooper(input_dir,output_dir,sample,samplename,isData,isSignal,signorm):
+def MakeCSCTimeTable(info,signal,isData):
+        os.system("mkdir studies")
+        os.system("mkdir studies/taucsccutflow")
+        x = PrettyTable( ['Time Selections','Exp. Events +/- Uncertainty'])
+        x.align["Time Selections"]    = "l"
+        x.align["Exp. Events +/- Uncertainty"]   = "r"
+        entries = len(info)
+        for k in range(0,entries):
+            x.add_row(['%s'%info[k][0],'%.5f +/- %.5f'%(info[k][1], info[k][3])])                                  
+        print x
+        with open('studies/taucsccutflow/%s_time.txt'%(signal), 'w') as the_file:
+           the_file.write(str(x))
+
+def CSCLooper(input_dir,output_dir,sample,samplename,isData,isSignal,signorm,tauregion):
     #Open input and output file
     if isData==False:
         t, cf, ac_csc, ac_dt = GetChainSingle(input_dir,'MuonSystem',sample,isData)
-        tmp  = TFile.Open("%s/histos_tau_csccutflow_%s.root"%(output_dir,samplename),'RECREATE')
     else:
-        t, cf, ac_csc, ac_dt = GetChainMultiple(input_dir,'MuonSystem',sample,isData)
-        tmp  = TFile.Open("%s/histos_tau_csccutflow_%s.root"%(output_dir,samplename),'RECREATE')        
+        t, cf, ac_csc, ac_dt = GetChainMultiple(input_dir,'MuonSystem',sample,isData)      
     #Counters
     cut6     = 0
     cut7     = 0
@@ -62,16 +73,14 @@ def CSCLooper(input_dir,output_dir,sample,samplename,isData,isSignal,signorm):
     cut10    = 0
     cut11    = 0
     cut12    = 0
-    cut13    = 0
-    cut14    = 0
-
-    #CUT (in-time)
-    h_cut7_clustertime         = TH1F("h_cut7_clustertime",         "h_cut7_clustertime",       64,-80,80)
-    h_cut7_cut_dphi_cls_met    = TH1F("h_cut7_cut_dphi_cls_met",    "h_cut7_cut_dphi_cls_met",  8, 0, 3.2)
-    h_cut8_clustertime         = TH1F("h_cut8_clustertime",         "h_cut8_clustertime",       64,-80,80)
-    h_cut8_cut_dphi_cls_met    = TH1F("h_cut8_cut_dphi_cls_met",    "h_cut8_cut_dphi_cls_met",  8, 0, 3.2)
-    h_cut9_clustertime         = TH1F("h_cut9_clustertime",         "h_cut9_clustertime",       64,-80,80)
-    h_cut9_cut_dphi_cls_met    = TH1F("h_cut9_cut_dphi_cls_met",    "h_cut9_cut_dphi_cls_met",  8, 0, 3.2)
+    cut13_itime_n80 = 0
+    cut13_itime_p80 = 0
+    cut13_otime_n80 = 0 
+    cut13_otime_p80 = 0 
+    cut14_itime_n80 = 0
+    cut14_itime_p80 = 0
+    cut14_otime_n80 = 0 
+    cut14_otime_p80 = 0 
 
     #Loop over events
     for e in range(0, t.GetEntries()):
@@ -87,49 +96,88 @@ def CSCLooper(input_dir,output_dir,sample,samplename,isData,isSignal,signorm):
         plot = False
         if (isData==False) or (isData==True and t.cscRechitClusterSize[clsid]<80): plot=True
 
-        #CUT (Select Tau) #(and Select AntiTau)
-        tautagged,tauid = SelectAntiTau(t)
-        if tautagged==False: continue
-        cut7+=1 
-        if plot==True:
-            h_cut7_clustertime.Fill(t.cscRechitClusterTimeTotal[clsid])
-            h_cut7_cut_dphi_cls_met.Fill(abs(t.cscRechitClusterMet_dPhi[clsid]))
+        #CUT (Select Tau or Antitau)
+        if tauregion==True: 
+                tautagged,tauid = SelectTau(t)
+                if tautagged==False: continue
+                cut7+=1 
+                #CUT (Jet Veto)
+                if t.cscRechitClusterJetVetoPt[clsid] > 10: continue
+                cut8+=1
+                #CUT (Muon Veto)
+                if t.cscRechitClusterMuonVetoPt[clsid] > 20: continue
+                cut9+=1
+                #CUT (Chamber Veto)
+                if t.cscRechitClusterNRechitChamberPlus11[clsid] > 0 or t.cscRechitClusterNRechitChamberMinus11[clsid] > 0: continue        
+                if t.cscRechitCluster_match_MB1Seg_0p4[clsid] >0: continue 
+                if t.cscRechitCluster_match_RB1_0p4[clsid] >0: continue 
+                cut10+=1
+                #Cut (Eta)
+                if abs(t.cscRechitClusterEta[clsid]) > 2.2: continue
+                cut11+=1
+                #CUT(time spread)
+                if t.cscRechitClusterTimeSpreadWeightedAll[clsid] > 20: continue
+                cut12+=1
+                #CUT IN-Time 
+                if INTimeCSC(t,clsid)==True:
+                        if isData==False: #MC
+                            if t.cscRechitClusterSize[clsid]<80: cut13_itime_n80+=1
+                            else: cut13_itime_p80+=1 
+                            #CUT (dphi)
+                            if abs(t.cscRechitClusterMet_dPhi[clsid])> (math.pi/2): continue
+                            if t.cscRechitClusterSize[clsid]<80: cut14_itime_n80+=1
+                            else: cut14_itime_p80+=1 
+                        else: #Data (blinded > 80)
+                            if t.cscRechitClusterSize[clsid]<80: cut13_itime_n80+=1
+                            #CUT (dphi)
+                            if abs(t.cscRechitClusterMet_dPhi[clsid])> (math.pi/2): continue
+                            if t.cscRechitClusterSize[clsid]<80: cut14_itime_n80+=1                            
+                #CUT OOT
+                if OOTimeCSC(t,clsid)==True:
+                        if t.cscRechitClusterSize[clsid]<80: cut13_otime_n80+=1
+                        else: cut13_otime_p80+=1 
+                        #CUT (dphi)
+                        if abs(t.cscRechitClusterMet_dPhi[clsid])> (math.pi/2): continue
+                        if t.cscRechitClusterSize[clsid]<80: cut14_otime_n80+=1
+                        else: cut14_otime_p80+=1 
+        else:
+                tautagged,tauid = SelectAntiTau(t)
+                if tautagged==False: continue
+                cut7+=1 
+                #CUT (Jet Veto)
+                if t.cscRechitClusterJetVetoPt[clsid] > 10: continue
+                cut8+=1
+                #CUT (Muon Veto)
+                if t.cscRechitClusterMuonVetoPt[clsid] > 20: continue
+                cut9+=1
+                #CUT (Chamber Veto)
+                if t.cscRechitClusterNRechitChamberPlus11[clsid] > 0 or t.cscRechitClusterNRechitChamberMinus11[clsid] > 0: continue        
+                if t.cscRechitCluster_match_MB1Seg_0p4[clsid] >0: continue 
+                if t.cscRechitCluster_match_RB1_0p4[clsid] >0: continue 
+                cut10+=1
+                #Cut (Eta)
+                if abs(t.cscRechitClusterEta[clsid]) > 2.2: continue
+                cut11+=1
+                #CUT(time spread)
+                if t.cscRechitClusterTimeSpreadWeightedAll[clsid] > 20: continue
+                cut12+=1
+                #CUT IN-Time 
+                if INTimeCSC(t,clsid)==True:
+                        if t.cscRechitClusterSize[clsid]<80: cut13_itime_n80+=1
+                        else: cut13_itime_p80+=1 
+                        #CUT (dphi)
+                        if abs(t.cscRechitClusterMet_dPhi[clsid])> (math.pi/2): continue
+                        if t.cscRechitClusterSize[clsid]<80: cut14_itime_n80+=1
+                        else: cut14_itime_p80+=1 
+                #CUT OOT
+                if OOTimeCSC(t,clsid)==True:
+                        if t.cscRechitClusterSize[clsid]<80: cut13_otime_n80+=1
+                        else: cut13_otime_p80+=1 
+                        #CUT (dphi)
+                        if abs(t.cscRechitClusterMet_dPhi[clsid])> (math.pi/2): continue
+                        if t.cscRechitClusterSize[clsid]<80: cut14_otime_n80+=1
+                        else: cut14_otime_p80+=1 
 
-        #CUT (Jet Veto)
-        if t.cscRechitClusterJetVetoPt[clsid] > 10: continue
-        cut8+=1
-        if plot==True:
-            h_cut8_clustertime.Fill(t.cscRechitClusterTimeTotal[clsid])
-            h_cut8_cut_dphi_cls_met.Fill(abs(t.cscRechitClusterMet_dPhi[clsid]))
-
-        #CUT (Muon Veto)
-        if t.cscRechitClusterMuonVetoPt[clsid] > 20: continue
-        cut9+=1
-        if plot==True:
-            h_cut9_clustertime.Fill(t.cscRechitClusterTimeTotal[clsid])
-            h_cut9_cut_dphi_cls_met.Fill(abs(t.cscRechitClusterMet_dPhi[clsid]))
-
-        #CUT (Chamber Veto)
-        if t.cscRechitClusterNRechitChamberPlus11[clsid] > 0 or t.cscRechitClusterNRechitChamberMinus11[clsid] > 0: continue        
-        if t.cscRechitCluster_match_MB1Seg_0p4[clsid] >0: continue 
-        if t.cscRechitCluster_match_RB1_0p4[clsid] >0: continue 
-        cut10+=1
-
-        #Cut (Eta)
-        if abs(t.cscRechitClusterEta[clsid]) > 2.2: continue
-        cut11+=1
-
-        #CUT(time spread)
-        if t.cscRechitClusterTimeSpread[clsid] > 20: continue
-        cut12+=1
-
-        #CUT IN-Time 
-        if INTimeCSC(t,clsid)==True:
-                cut13+=1 
-                #CUT (dphi)
-                if abs(t.cscRechitClusterMet_dPhi[clsid])> (math.pi/2): continue
-                cut14+=1
-                
     #Collect CSC cutflow to make the table
     nums = []
     if isSignal==True:
@@ -155,17 +203,13 @@ def CSCLooper(input_dir,output_dir,sample,samplename,isData,isSignal,signorm):
     nums.append(w*float(cut10) ) 
     nums.append(w*float(cut11) ) 
     nums.append(w*float(cut12) ) 
-    nums.append(w*float(cut13) )
     if isSignal==True: 
         tag = 'Acceptance'
         den = [w*cf.GetBinContent(1),w*ac_csc.GetBinContent(2)]
     else:
         den = [w*cf.GetBinContent(2),w*cf.GetBinContent(2)]
         tag = 'Total'
-    if isData: 
-        nums.append(w*float(cut13)/2)  #Blinded, so model
-    else: 
-        nums.append(w*float(cut14) ) 
+    #Fill array     
     effinfo = [
              [tag                        ,nums[0] , den, math.sqrt(w*nums[0])],
              ['MET Trigger and MET>200'  ,nums[1] , den, math.sqrt(w*nums[1])],
@@ -178,20 +222,27 @@ def CSCLooper(input_dir,output_dir,sample,samplename,isData,isSignal,signorm):
              ['Muon Veto'                ,nums[8] , den, math.sqrt(w*nums[8])],
              ['ME1/1, MB1, RB1 Vetos'    ,nums[9] , den, math.sqrt(w*nums[9])],  
              ['|Eta| < 2.2'              ,nums[10], den, math.sqrt(w*nums[10])], 
-             ['Time spread < 20 ns'      ,nums[11], den, math.sqrt(w*nums[11])],
-             ['-5 ns < Time < 12.5 ns'   ,nums[12], den, math.sqrt(w*nums[12])],
-#             ['|dPhi(cls,MET)| < pi/2'   ,nums[13], den, math.sqrt(w*nums[13])],
     ]
+    effinfotime = []
+    effinfotime.append(['IN-time (rechits<80)' ,w*cut13_itime_n80, den, math.sqrt(w*w*cut13_itime_n80)])
+    effinfotime.append(['IN-time (rechits>=80)',w*cut13_itime_p80, den, math.sqrt(w*w*cut13_itime_p80)])
+    effinfotime.append(['OO-time (rechits<80)' ,w*cut13_otime_n80, den, math.sqrt(w*w*cut13_otime_n80)])
+    effinfotime.append(['OO-time (rechits>=80)',w*cut13_otime_p80, den, math.sqrt(w*w*cut13_otime_p80)])
 
-    return effinfo
+    return effinfo,effinfotime
 
 ###########OPTIONS
 parser = argparse.ArgumentParser(description='Command line parser of skim options')
 parser.add_argument('--config' ,  dest='cfgfile',  help='Name of config file',  required = True)
 parser.add_argument('--tag',    dest='tag',  help='Name of tag', required = True)
+parser.add_argument('--tauregion',    dest='tauregion', action='store_true', help='Apply Tau region')
+parser.add_argument('--no-tauregion', dest='tauregion', action='store_false',help='Do not apply Tau region')
+parser.set_defaults(tauregion=False)
+
 args           = parser.parse_args()
 configfilename = args.cfgfile
 tagname        = args.tag
+tauregion      = args.tauregion
 
 #Reading configuration
 print "[INFO] Reading skim configuration file . . ."
@@ -231,12 +282,14 @@ isData=False
 isSignal=True
 for k in range (0,len(signals) ):
     print "[INFO] Running looper over %s"%signals[k]
-    effinfo = CSCLooper(input_dir+tagname,output_dir,signals[k],signals[k],isData,isSignal,sigxs[k]*lumi)
+    effinfo,effinfotime = CSCLooper(input_dir+tagname,output_dir,signals[k],signals[k],isData,isSignal,sigxs[k]*lumi,tauregion)
     MakeCSCEfficiencyTable(effinfo,signals[k],isData)
+    MakeCSCTimeTable(effinfotime,signals[k],isData)
 
 #Run looper over Data samples
 isData=True
 isSignal=False
 print "[INFO] Running looper over data"
-effinfo = CSCLooper(input_dir+tagname,output_dir,datas,'Data',isData,isSignal,sigxs[k]*lumi)
+effinfo,effinfotime = CSCLooper(input_dir+tagname,output_dir,datas,'Data',isData,isSignal,1,tauregion)
 MakeCSCEfficiencyTable(effinfo,'Data',isData)
+MakeCSCTimeTable(effinfotime,'Data',isData)

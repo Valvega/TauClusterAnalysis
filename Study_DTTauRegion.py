@@ -46,14 +46,26 @@ def MakeDTEfficiencyTable(info,signal,isData):
         with open('studies/taudtcutflow/%s.txt'%(signal), 'w') as the_file:
            the_file.write(str(x))
 
-def DTLooper(input_dir,output_dir,sample,samplename,isData,isSignal,signorm):
+def MakeDTTimeTable(info,signal,isData):
+        os.system("mkdir studies")
+        os.system("mkdir studies/taudtcutflow")
+        x = PrettyTable( ['Time Selections','Exp. Events +/- Uncertainty'])
+        x.align["Time Selections"]    = "l"
+        x.align["Exp. Events +/- Uncertainty"]   = "r"
+        entries = len(info)
+        for k in range(0,entries):
+            x.add_row(['%s'%info[k][0],'%.5f +/- %.5f'%(info[k][1], info[k][3])])                                  
+        print x
+        with open('studies/taudtcutflow/%s_time.txt'%(signal), 'w') as the_file:
+           the_file.write(str(x))
+
+
+def DTLooper(input_dir,output_dir,sample,samplename,isData,isSignal,signorm,tauregion):
     #Open input and output file
     if isData==False:
         t, cf, ac_csc, ac_dt = GetChainSingle(input_dir,'MuonSystem',sample,isData)
-        tmp  = TFile.Open("%s/histos_tau_dtcutflow_%s.root"%(output_dir,samplename),'RECREATE')
     else:
-        t, cf, ac_csc, ac_dt = GetChainMultiple(input_dir,'MuonSystem',sample,isData)
-        tmp  = TFile.Open("%s/histos_tau_dtcutflow_%s.root"%(output_dir,samplename),'RECREATE')   
+        t, cf, ac_csc, ac_dt = GetChainMultiple(input_dir,'MuonSystem',sample,isData) 
     #Counters
     cut6    = 0
     cut7    = 0
@@ -61,14 +73,14 @@ def DTLooper(input_dir,output_dir,sample,samplename,isData,isSignal,signorm):
     cut9    = 0
     cut10   = 0
     cut11   = 0
-    cut12   = 0
-    cut13   = 0
-
-    #CUT (in-time)
-    h_cut8_clustertime            = TH1F("h_cut8_clustertime",         "h_cut8_clustertime",        20,-10,10)
-    h_cut8_cut_dphi_cls_met       = TH1F("h_cut8_cut_dphi_cls_met",    "h_cut8_cut_dphi_cls_met",   4, 0, 3.2)
-    h_cut9_clustertime            = TH1F("h_cut9_clustertime",         "h_cut9_clustertime",        20,-10,10)
-    h_cut9_cut_dphi_cls_met       = TH1F("h_cut9_cut_dphi_cls_met",    "h_cut9_cut_dphi_cls_met",   4, 0, 3.2)
+    cut12_itime_n80 = 0
+    cut12_itime_p80 = 0
+    cut12_otime_n80 = 0 
+    cut12_otime_p80 = 0 
+    cut13_itime_n80 = 0
+    cut13_itime_p80 = 0
+    cut13_otime_n80 = 0 
+    cut13_otime_p80 = 0 
 
     #Loop over events
     for e in range(0, t.GetEntries()):
@@ -84,39 +96,77 @@ def DTLooper(input_dir,output_dir,sample,samplename,isData,isSignal,signorm):
         plot = False
         if (isData==False) or (isData==True and t.dtRechitClusterSize[clsid]<80): plot=True
         
-        #CUT (Tau) #(and AntiTau) 
-        tautagged,tauid = SelectAntiTau(t)
-        if tautagged==False: continue
-        cut7+=1
-        
-        #CUT (jet veto)
-        if t.dtRechitClusterJetVetoPt[clsid]  > 20: continue
-        cut8+=1
-        if plot==True:
-          h_cut8_clustertime.Fill(t.dtRechitCluster_match_RPCBx_dPhi0p5[clsid])
-          h_cut8_cut_dphi_cls_met.Fill(abs(t.dtRechitClusterMet_dPhi[clsid]))
-        
-        #CUT (muon veto)
-        if t.dtRechitClusterMuonVetoPt[clsid] > 10: continue
-        cut9+=1
-        if plot==True:
-          h_cut9_clustertime.Fill(t.dtRechitCluster_match_RPCBx_dPhi0p5[clsid])
-          h_cut9_cut_dphi_cls_met.Fill(abs(t.dtRechitClusterMet_dPhi[clsid]))
-        
-        #CUT (MB1 Adjacent)
-        if t.dtRechitCluster_match_MB1hits_cosmics_minus[clsid] > 8 or t.dtRechitCluster_match_MB1hits_cosmics_plus[clsid] > 8: continue
-        cut10+=1
-        
-        #CUT (RPCmatching)
-        if t.dtRechitCluster_match_RPChits_dPhi0p5[clsid] <=0: continue
-        cut11+=1
-        
-        #Cut (in time) 
-        if INTimeDT(t,clsid)==True:
-            cut12+=1
-            #CUT (dphi) 
-            if t.dtRechitClusterMet_dPhi[clsid]>=(math.pi/2):  continue
-            cut13+=1
+        #CUT (Select Tau or Antitau)
+        if tauregion==True:
+             tautagged,tauid = SelectTau(t)
+             if tautagged==False: continue
+             cut7+=1
+             #CUT (jet veto)
+             if t.dtRechitClusterJetVetoPt[clsid]  > 20: continue
+             cut8+=1
+             #CUT (muon veto)
+             if t.dtRechitClusterMuonVetoPt[clsid] > 10: continue
+             cut9+=1
+             #CUT (MB1 Adjacent)
+             if t.dtRechitCluster_match_MB1hits_cosmics_minus[clsid] > 8 or t.dtRechitCluster_match_MB1hits_cosmics_plus[clsid] > 8: continue
+             cut10+=1
+             #CUT (RPCmatching)
+             if t.dtRechitCluster_match_RPChits_dPhi0p5[clsid] <=0: continue
+             cut11+=1
+             #Cut (IT) 
+             if INTimeDT(t,clsid)==True:
+                 if isData==False: #MC
+                     if t.dtRechitClusterSize[clsid]<80: cut12_itime_n80+=1
+                     else: cut12_itime_p80+=1 
+                     #CUT (dphi)
+                     if abs(t.dtRechitClusterMet_dPhi[clsid])> (math.pi/2): continue
+                     if t.dtRechitClusterSize[clsid]<80: cut13_itime_n80+=1
+                     else: cut13_itime_p80+=1 
+                 else: #Data (blinded > 80)
+                     if t.dtRechitClusterSize[clsid]<80: cut12_itime_n80+=1
+                     #CUT (dphi)
+                     if abs(t.dtRechitClusterMet_dPhi[clsid])> (math.pi/2): continue
+                     if t.dtRechitClusterSize[clsid]<80: cut13_itime_n80+=1  
+             #CUT OOT
+             if OOTimeDT(t,clsid)==True:
+                    if t.dtRechitClusterSize[clsid]<80: cut12_otime_n80+=1
+                    else: cut12_otime_p80+=1 
+                    #CUT (dphi)
+                    if abs(t.dtRechitClusterMet_dPhi[clsid])> (math.pi/2): continue
+                    if t.dtRechitClusterSize[clsid]<80: cut13_otime_n80+=1
+                    else: cut13_otime_p80+=1 
+        else:
+             tautagged,tauid = SelectAntiTau(t)
+             if tautagged==False: continue
+             cut7+=1
+             #CUT (jet veto)
+             if t.dtRechitClusterJetVetoPt[clsid]  > 20: continue
+             cut8+=1
+             #CUT (muon veto)
+             if t.dtRechitClusterMuonVetoPt[clsid] > 10: continue
+             cut9+=1
+             #CUT (MB1 Adjacent)
+             if t.dtRechitCluster_match_MB1hits_cosmics_minus[clsid] > 8 or t.dtRechitCluster_match_MB1hits_cosmics_plus[clsid] > 8: continue
+             cut10+=1
+             #CUT (RPCmatching)
+             if t.dtRechitCluster_match_RPChits_dPhi0p5[clsid] <=0: continue
+             cut11+=1
+             #Cut (IT) 
+             if INTimeDT(t,clsid)==True:
+                    if t.dtRechitClusterSize[clsid]<80: cut12_itime_n80+=1
+                    else: cut12_itime_p80+=1 
+                    #CUT (dphi)
+                    if abs(t.dtRechitClusterMet_dPhi[clsid])> (math.pi/2): continue
+                    if t.dtRechitClusterSize[clsid]<80: cut13_itime_n80+=1
+                    else: cut13_itime_p80+=1 
+             #CUT OOT
+             if OOTimeDT(t,clsid)==True:
+                    if t.dtRechitClusterSize[clsid]<80: cut12_otime_n80+=1
+                    else: cut12_otime_p80+=1 
+                    #CUT (dphi)
+                    if abs(t.dtRechitClusterMet_dPhi[clsid])> (math.pi/2): continue
+                    if t.dtRechitClusterSize[clsid]<80: cut13_otime_n80+=1
+                    else: cut13_otime_p80+=1 
 
     #Collect dt cutflow info for table
     nums = []
@@ -142,18 +192,12 @@ def DTLooper(input_dir,output_dir,sample,samplename,isData,isSignal,signorm):
     nums.append( w*float(cut9 ) ) 
     nums.append( w*float(cut10) ) 
     nums.append( w*float(cut11) ) 
-    nums.append( w*float(cut12) ) 
     if isSignal==True: 
         tag = 'Acceptance'
         den = [w*cf.GetBinContent(1),w*ac_dt.GetBinContent(2)]
     else:
         den = [w*cf.GetBinContent(2),w*cf.GetBinContent(2)]
         tag = 'Total'
-    if isData: 
-        nums.append(float(cut12)/2)  #Blinded, so model
-    else: 
-        nums.append(float(cut13))  
-
     effinfo = [
              [tag                        ,nums[0] , den, math.sqrt(w*nums[0])],
              ['MET Trigger and MET200'   ,nums[1] , den, math.sqrt(w*nums[1])],
@@ -166,20 +210,27 @@ def DTLooper(input_dir,output_dir,sample,samplename,isData,isSignal,signorm):
              ['Muon Veto'                ,nums[8] , den, math.sqrt(w*nums[8])],
              ['MB1 Adjacent'             ,nums[9] , den, math.sqrt(w*nums[9])], 
              ['RPC Matching'             ,nums[10], den, math.sqrt(w*nums[10])], 
-             ['Time (BX=0)'              ,nums[11], den, math.sqrt(w*nums[11])], 
-             #['|dPhi(cls,MET)| < pi/2'   ,nums[12], den, math.sqrt(w*nums[12])],
     ]
-    tmp.Write()
-    tmp.Close()
-    return effinfo
+    effinfotime = []
+    effinfotime.append(['IN-time (rechits<80)' ,w*cut12_itime_n80, den, math.sqrt(w*w*cut12_itime_n80)])
+    effinfotime.append(['IN-time (rechits>=80)',w*cut12_itime_p80, den, math.sqrt(w*w*cut12_itime_p80)])
+    effinfotime.append(['OO-time (rechits<80)' ,w*cut12_otime_n80, den, math.sqrt(w*w*cut12_otime_n80)])
+    effinfotime.append(['OO-time (rechits>=80)',w*cut12_otime_p80, den, math.sqrt(w*w*cut12_otime_p80)])
+
+    return effinfo,effinfotime
 
 ###########OPTIONS
 parser = argparse.ArgumentParser(description='Command line parser of skim options')
 parser.add_argument('--config' ,  dest='cfgfile',  help='Name of config file',  required = True)
 parser.add_argument('--tag',    dest='tag',  help='Name of tag', required = True)
+parser.add_argument('--tauregion',    dest='tauregion', action='store_true', help='Apply Tau region')
+parser.add_argument('--no-tauregion', dest='tauregion', action='store_false',help='Do not apply Tau region')
+parser.set_defaults(tauregion=False)
+
 args           = parser.parse_args()
 configfilename = args.cfgfile
 tagname        = args.tag
+tauregion      = args.tauregion
 
 #Reading configuration
 print "[INFO] Reading skim configuration file . . ."
@@ -219,13 +270,14 @@ isData=False
 isSignal=True
 for k in range (0,len(signals) ):
     print "[INFO] Running looper over %s"%signals[k]
-    effinfo = DTLooper(input_dir+tagname,output_dir,signals[k],signals[k],isData,isSignal,sigxs[k]*lumi)
+    effinfo,effinfotime = DTLooper(input_dir+tagname,output_dir,signals[k],signals[k],isData,isSignal,sigxs[k]*lumi,tauregion)
     MakeDTEfficiencyTable(effinfo,signals[k],isData)
+    MakeDTTimeTable(effinfotime,signals[k],isData)
 
 #Run looper over data samples
 isData=True
 isSignal=False
 print "[INFO] Running looper over data"
-effinfo = DTLooper(input_dir+tagname,output_dir,datas,'Data',isData,isSignal,sigxs[k]*lumi)
+effinfo,effinfotime = DTLooper(input_dir+tagname,output_dir,datas,'Data',isData,isSignal,1,tauregion)
 MakeDTEfficiencyTable(effinfo,'Data',isData)
-
+MakeDTTimeTable(effinfotime,'Data',isData)
