@@ -45,12 +45,12 @@ def SelectCSCCluster(t):
 
 def INTimeCSC(t,clsid):
     ipass = False
-    if t.cscRechitClusterTimeTotal[clsid]> -5 and t.cscRechitClusterTimeTotal[clsid] < 12.5: ipass=True
+    if t.cscRechitClusterTimeWeighted[clsid]> -5 and t.cscRechitClusterTimeWeighted[clsid] < 12.5: ipass=True
     return ipass
 
 def OOTimeCSC(t,clsid):
     ipass = False
-    if t.cscRechitClusterTimeTotal[clsid] < -12.5: ipass=True
+    if t.cscRechitClusterTimeWeighted[clsid] < -12.5: ipass=True
     return ipass
 
 def INTimeDT(t,clsid):
@@ -60,7 +60,7 @@ def INTimeDT(t,clsid):
 
 def OOTimeDT(t,clsid):
     ipass = False
-    if t.dtRechitCluster_match_RPCBx_dPhi0p5[clsid]<0: ipass=True
+    if t.dtRechitCluster_match_RPCBx_dPhi0p5[clsid] <0: ipass=True
     return ipass
 
 def SelectTau(t):
@@ -86,7 +86,7 @@ def SelectAntiTau(t):
         if ntau==True: return False,-1
         #If not, get the highest pt tau f
         for i in range(0,t.nTau):
-            if t.tauPt[i]> 50 and abs(t.tauEta[i]) <= 2.3:
+            if t.tauPt[i]> 50 and abs(t.tauEta[i]) <= 2.3: # and t.tau_IsLoose[i]==True:
                    ntau_a=True
                    if t.tauPt[i]>=maxtaupt_a:
                        maxtaupt_a = t.tauPt[i]
@@ -98,5 +98,3 @@ def CSCMuonJetVeto(t,clsid):
     if t.cscRechitClusterMuonVetoPt[clsid] > 20: ipass = False
     if t.cscRechitClusterJetVetoPt[clsid]  > 10: ipass = False
     return ipass
-
-
