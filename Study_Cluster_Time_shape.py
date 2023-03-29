@@ -22,21 +22,12 @@ ROOT.gStyle.SetOptStat(0)
 parser = argparse.ArgumentParser(description='Command line parser of skim options')
 parser.add_argument('--config' ,  dest='cfgfile',  help='Name of config file',  required = True)
 parser.add_argument('--tag',    dest='tag',  help='Name of tag', required = True)
-parser.add_argument('--sel',    dest='sel',  help='Name of anti selection', required = False)
 parser.add_argument('--type',	dest='type', help='csc or dt', required = True)
-#parser.add_argument('--tauregion',    dest='tauregion', action='store_true', help='Apply Tau region')
-#parser.add_argument('--no-tauregion', dest='tauregion', action='store_false',help='Do not apply Tau region')
-#parser.add_argument('--draw',    dest='draw', action='store_true', help='Draw comparion')
-#parser.set_defaults(tauregion=False)
-#parser.set_defaults(draw=False)
 
 args           = parser.parse_args()
 configfilename = args.cfgfile
 tagname        = args.tag
-selname        = args.sel
 typename	   = args.type
-#tauregion      = args.tauregion
-#draw           = args.draw
 
 #Reading configuration
 print "[INFO] Reading skim configuration file . . ."
