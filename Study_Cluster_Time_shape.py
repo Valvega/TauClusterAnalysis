@@ -1,9 +1,3 @@
-import ROOT
-from ROOT import TFile, TTree, TMath, TH1F,TChain,TH2F, TF1, TCanvas, TLegend, TPaveText
-import sys
-import os
-import argparse
-import ast
 import glob
 import math
 import string 
@@ -27,7 +21,7 @@ parser.add_argument('--type',	dest='type', help='csc or dt', required = True)
 args           = parser.parse_args()
 configfilename = args.cfgfile
 tagname        = args.tag
-typename	   = args.type
+typename       = args.type
 
 #Reading configuration
 print "[INFO] Reading skim configuration file . . ."
@@ -56,18 +50,18 @@ sigxs      = ast.literal_eval(cfgparser.get("histoconfiguration","sigxs"))
 print "    -The list of MC signal xs (in pb):"
 for x in range(len(sigxs)): print "      *",sigxs[x]
 
-def Histograms(histo1,histo2,regions,output_dir,typename):
+def Histograms(histo1,histo2,regions,output_dir,typename,color1,color2,color3):
 	#Set format
-	histo1.SetMarkerColor(ROOT.kBlack)
+	histo1.SetMarkerColor(color1)
 	histo1.SetMarkerSize(2)
 	histo1.SetMarkerStyle(20)
-	histo1.SetLineColor(ROOT.kBlack)
+	histo1.SetLineColor(color1)
 	histo1.SetLineWidth(2)
 	histo2_line = histo2.Clone()
-	histo2_line.SetLineColor(ROOT.kOrange+2)
+	histo2_line.SetLineColor(color2)
 	histo2_line.SetLineWidth(3)
-	histo2.SetLineColor(ROOT.kOrange-9)
-	histo2.SetFillColor(ROOT.kOrange-9)
+	histo2.SetLineColor(color3)
+	histo2.SetFillColor(color3)
 	#Create Canvas
 	c1 = TCanvas("c1", "c1", 1300, 1300)
 	c1.SetFrameLineWidth(4)
@@ -85,7 +79,7 @@ def Histograms(histo1,histo2,regions,output_dir,typename):
 	histoframe.GetYaxis().SetTitleOffset(1.5)
 	histoframe.GetXaxis().SetTitleOffset(1.1)
 	histoframe.GetXaxis().SetTitle("Number of %s RecHits"%(typename))
-	histoframe.GetYaxis().SetTitle("N. U.")
+	histoframe.GetYaxis().SetTitle("N.U.")
 	histoframe.Draw()
 	#Find maximumvalue in the frame
 	maxs = [ histo1.GetMaximum()/histo1.Integral(), histo2.GetMaximum()/histo2.Integral()]
@@ -126,20 +120,20 @@ def Histograms(histo1,histo2,regions,output_dir,typename):
 	del c1
 
 #Opening files
-tfile_data1  = TFile.Open("%s/histos_cscmodel_Data.root"%(input_dir))
-tfile_data2  = TFile.Open("%s/histos_cscmodel_0M_Data.root"%(input_dir))
-tfile_data3  = TFile.Open("%s/histos_cscmodel_0L_Data.root"%(input_dir))
-tfile_data4  = TFile.Open("%s/histos_cscmodel_0VL_Data.root"%(input_dir))
-tfile_data5  = TFile.Open("%s/histos_cscmodel_0VVL_Data.root"%(input_dir))
-tfile_data6  = TFile.Open("%s/histos_cscmodel_0VVVL_Data.root"%(input_dir))
-##Out of time
+tfile_data1  = TFile.Open("%s/histos_%smodel_Data.root"%(input_dir,typename))
+tfile_data2  = TFile.Open("%s/histos_%smodel_0M_Data.root"%(input_dir,typename))
+tfile_data3  = TFile.Open("%s/histos_%smodel_0L_Data.root"%(input_dir,typename))
+tfile_data4  = TFile.Open("%s/histos_%smodel_0VL_Data.root"%(input_dir,typename))
+tfile_data5  = TFile.Open("%s/histos_%smodel_0VVL_Data.root"%(input_dir,typename))
+tfile_data6  = TFile.Open("%s/histos_%smodel_0VVVL_Data.root"%(input_dir,typename))
+#In Time
 h1           =  tfile_data1.Get("h_model_clustersize")
 h2           =  tfile_data2.Get("h_model_clustersize")
 h3           =  tfile_data3.Get("h_model_clustersize")
 h4           =  tfile_data4.Get("h_model_clustersize")
 h5           =  tfile_data5.Get("h_model_clustersize")
 h6           =  tfile_data6.Get("h_model_clustersize")		
-#In time
+#Out of Time
 h7           =  tfile_data1.Get("h_model_clustersize_oot")
 h8           =  tfile_data2.Get("h_model_clustersize_oot")
 h9           =  tfile_data3.Get("h_model_clustersize_oot")
@@ -162,6 +156,6 @@ print "0VVLID difference between IT and OOT",testp5
 print "0VVVLID difference between IT and OOT",testp6
 
 ##############Histograms############################
-Histograms( h1, h7, "Tau",output_dir,typename)
-Histograms( h5, h11,"0VVLID",output_dir,typename)
-Histograms( h6, h12,"0VVVLID",output_dir,typename)
+Histograms( h1, h7, "Tau",output_dir,typename, ROOT.kBlack, ROOT.kGray+2, ROOT.kGray+1)
+Histograms( h5, h11,"0VVLID",output_dir,typename, ROOT.kRed+3, ROOT.kRed-4, ROOT.kRed-9)
+Histograms( h6, h12,"0VVVLID",output_dir,typename, ROOT.kOrange+3, ROOT.kOrange+7, ROOT.kOrange-9)
